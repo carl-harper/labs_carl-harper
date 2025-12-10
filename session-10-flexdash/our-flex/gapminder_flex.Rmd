@@ -11,6 +11,7 @@ runtime: shiny
 library(flexdashboard)
 library(leaflet)
 library(rnaturalearth)
+library(gapminder)
 library(dplyr)
 library(sf)
 library(shiny)
@@ -22,14 +23,40 @@ pal <- colorNumeric("YlOrRd", domain = NULL)
 africa <- ne_countries(continent = "Africa", returnclass = "sf")
 ```
 
-
-
-### African Countries 
 ```{r}
-# Plot 
-leaflet(africa) |>
-  addTiles() |>
-  addPolygons()
+
+
+
+```
+Column {.sidebar}
+-------------------------
+```{r}
+selectInput("year", "Choose Year:", choices = unique(gapminder$year))
 ```
 
+Column {data-width=650}
+-----------------------------------------------------------------------
+
+### African Countries 
+
+```{r}
+renderLeaflet({
+  gapminder_africa <- gapminder |>
+  filter(continent == "Africa", year == input$year)
+
+africa_data <- africa |>
+  left_join(gapminder_africa, by = c("name" = "country"))
+
+leaflet(africa_data) |>
+  addTiles() |>
+  addPolygons(fillColor = ~pal(lifeExp), fillOpacity = 0.7)|>
+  addLegend(pal = colorNumeric("YlOrRd", domain = NULL), values = ~lifeExp, title = "Life Expectancy By Country", position = "bottomleft")})
+
+
+```
+
+
+```{r}
+
+```
 

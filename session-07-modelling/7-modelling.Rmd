@@ -332,6 +332,10 @@ Look at the `multiv_model_out` object that you have just created. Try to get a s
 
 ```{r, echo= FALSE}
 # your code here
+
+summary(multiv_model_out[10])
+summary(multiv_model_out[25])
+summary(multiv_model_out[31])
 ```
 :::
 
@@ -352,7 +356,7 @@ specs <- specr::setup(
   data = life_expec_dat, 
   y = c("life_expectancy"), # add dependent variable 
   x = c("gdp", "log(gdp)", "I(gdp^2)"), # add independent variables 
-  model = c("lm", "glm"), # specify model types
+  model = c("lm", "glm"), # specify model types, linear model, generalized linear model
   controls = c("population", "alcohol", "bmi"), # specify controls
   subsets = as.list(distinct(life_expec_dat, status)) # specify subgroup
 )
@@ -609,7 +613,18 @@ Our implementation of `modelsummary` above is good, but it can be improved furth
 
 
 ```{r, echo= FALSE}
+mod_table <- modelsummary::modelsummary(multiv_model_out[29:31], 
+                                          output = "kableExtra",
+                                          fmt = fmt_significant(2),  # 2-digits and trailing 0  
+                                          estimate  = "{estimate}", 
+                                          statistic = "conf.int",
+                                          coef_omit = "Intercept",
+                                          escape = FALSE) |>
 
+mod_table |> 
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), full_width = F, fixed_thead = T) |> 
+  row_spec(3, color = 'red') |>
+  row_spec(5, background = 'lightblue')
 ```  
 :::
 ---

@@ -16,7 +16,7 @@ tomatoes <- dplyr::tbl(db, "tomatoes")
 # Join tables, filtering out those with <10 reviews, and select specified columns
 all_movies <- dplyr::inner_join(omdb, tomatoes, by = "ID") %>%
   dplyr::filter(Reviews >= 10) %>%
-  dplyr::select(ID, imdbID, Title, Year, Rating_m = Rating.x, Runtime, Released,
+  dplyr::select(Genre, ID, imdbID, Title, Year, Rating_m = Rating.x, Runtime, Released,
                 Director, Writer, imdbRating, imdbVotes, Language, Country, Oscars,
                 Rating = Rating.y, Meter, Reviews, Fresh, Rotten, userMeter, userRating, userReviews,
                 BoxOffice, Production, Cast)
@@ -64,7 +64,8 @@ ui <- fluidPage(
              sliderInput("boxoffice", "Dollars at Box Office (millions)",
                          0, 800, c(0, 800), step = 1),
              textInput("director", "Director name contains (e.g., Miyazaki)"),
-             textInput("cast", "Cast names contains (e.g. Tom Hanks)")
+             textInput("cast", "Cast names contains (e.g. Tom Hanks)"),
+             selectInput("genre", "Genres", c("All", "Action", "Adventure", "Animation", "Biography", "Comedy", "Crime", "Documentary", "Drama", "Family", "Fantasy", "History", "Horror", "Music", "Musical", "Mystery", "Romance", "Sci-Fi", "Short", "Sport", "Thriller", "War", "Western"))
            ),
            
            # Plot axis selector
@@ -117,7 +118,10 @@ server <- function(input, output, session) {
         BoxOffice <= maxboxoffice
       ) %>%
       dplyr::arrange(Oscars)
-    
+    if (input$genre !="All"){
+      genre<- paste0("%", input$genre, "%")
+      m<- m%>% filter (Genre %like% genre)
+    }
     # Optional: filter by director
     if (!is.null(input$director) && input$director != "") {
       # As our data is an SQL database, we need to use SQL LIKE syntax to match patterns in strings
@@ -180,13 +184,14 @@ server <- function(input, output, session) {
       )"
       )
     ) +
-      geom_point(shape = 21, alpha = 0.7) +
+      geom_point(aes(size=BoxOffice), shape = 21, alpha = 0.7) +
       scale_fill_manual(values = c("Yes" = "orange", "No" = "gray"),name = "Won an Oscar") +
       scale_color_manual(values = c("Yes" = "orange", "No" = "gray"),guide = "none") +
       labs(
         x = xvar_name,
         y = yvar_name
       ) +
+      ggtitle(paste(xvar_name, "by", yvar_name) )+ 
       theme_minimal()
     
     # Convert to plotly
